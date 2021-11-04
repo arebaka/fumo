@@ -1,6 +1,3 @@
-const fs   = require("fs");
-const toml = require("toml");
-
 const LIB_NAME = "fumo";
 
 const primitives = [
