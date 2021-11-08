@@ -1,6 +1,6 @@
 const LIB_NAME = "fumo";
 
-const { lintSchema, lintPrimitive } = require("./lint_schema");
+const { primitives, lintSchema, lintPrimitive } = require("./lint_schema");
 
 class Schema
 {
@@ -15,7 +15,7 @@ class Schema
     lint(data, type)
     {
         try {
-            resolve(data, type, false);
+            this.resolve(data, type, false);
 
             return true;
         }
@@ -27,6 +27,9 @@ class Schema
     resolve(data, type, setDefault=true)
     {
         try {
+            if (!type)
+                throw "no_type"
+
             this.resolveIter(data, type, setDefault, "");
         }
         catch (err) {
@@ -37,6 +40,13 @@ class Schema
     resolveIter(data, type, setDefault, fullname)
     {
         fullname = fullname || type;
+
+        if (primitives.includes(type)) {
+            if (lintPrimitive(type, data))
+                return;
+            else
+                throw "invalid_data: " + fullname
+        }
 
         const tuple       = type.split('.');
         const fieldPrefix = fullname ? fullname + '.' : "";
@@ -80,11 +90,11 @@ class Schema
                     type = type.substring(0, type.length - 2);
 
                     for (let j = 0; j < data[i].length; j++) {
-                        this.resolve(data[i][j], type, setDefault, fieldPrefix + `${i}[${j}]`);
+                        this.resolveIter(data[i][j], type, setDefault, fieldPrefix + `${i}[${j}]`);
                     }
                 }
                 else if (type.includes('.')) {
-                    this.resolve(data[i], type, setDefault, fieldPrefix + i);
+                    this.resolveIter(data[i], type, setDefault, fieldPrefix + i);
                 }
                 else if (!lintPrimitive(type, data[i]))
                     throw "invalid_type: " + fieldPrefix + i;
@@ -128,7 +138,7 @@ class Schema
                 }
             }
 
-            this.resolve(data, struct.prototype, setDefault, fieldPrefix);
+            this.resolveIter(data, struct.prototype, setDefault, fieldPrefix);
         }
     }
 }

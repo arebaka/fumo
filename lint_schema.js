@@ -265,6 +265,7 @@ function lintSchema(schema)
 }
 
 module.exports = {
+    primitives,
     lintPrimitive,
     lintSchema
 };
